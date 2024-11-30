@@ -9,8 +9,7 @@ from panda3d.physics import *
 
 class CameraControllerBehaviour(DirectObject):
     _instances = 0
-    
-    def __init__(self, camera, velocity=9, mouse_sensitivity=0.01,initial_pos=(0, 0, 5), showbase=None):
+    def __init__(self, camera, velocity=9, mouse_sensitivity=0.2,initial_pos=(0, 0, 5), showbase=None):
         self._camera = camera
         self._velocity = velocity
         self._mouse_sensitivity = mouse_sensitivity
@@ -124,6 +123,7 @@ class CameraControllerBehaviour(DirectObject):
             self._showbase.camera.setZ(self._showbase.camera, pos_increment)
 
         if  self._input_state.isSet('down'):
+            MyApp.createwalls()
             self._showbase.camera.setZ(self._showbase.camera, -pos_increment)
         
         cam_pos = self._showbase.camera.getPos(self._showbase.render)
@@ -135,7 +135,7 @@ class CameraControllerBehaviour(DirectObject):
         return Task.cont
         
 class MyApp(ShowBase):
-    
+
     def createwalls(self):
         wall_collision_node = CollisionNode('wall')
         wall_collision_node.addSolid(CollisionBox(Point3(22, -6.5, 32), 19, .5, 27))
@@ -146,20 +146,36 @@ class MyApp(ShowBase):
         wall_collision_node.addSolid(CollisionBox(Point3(-43, -35, 32), .5, 28, 27))
         wall_collision_node.addSolid(CollisionBox(Point3(0, -35, 0), 43, 28, 5))
         wall_collision_node.addSolid(CollisionBox(Point3(0, 0, 0), 15, 5, 2))
-        wall_collision_node.addSolid(CollisionBox(Point3(14, -25.5, 9), .3, 8.5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(14, -32, 9), .3, 15, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-17.5, -15, 9), 1.5, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-25, -15, 9), 1.7, .3, 4))
         wall_collision_node.addSolid(CollisionBox(Point3(-15.75, -12.5, 9), .3, 6, 4))
-        wall_collision_node.addSolid(CollisionBox(Point3(-15.75, -40, 9), .3, 16, 4))
-        wall_collision_node.addSolid(CollisionBox(Point3(7, -35, 9), 6, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-15.75, -34, 9), .3, 11.5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-15.75, -57.5, 9), .3, 5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(14, -56.5, 9), .3, 6, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(13, -35, 9), 10, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-23, -35, 9), 19, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-25, -10, 9), .3, 5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-33,-41, 9), .3, 5.5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-33,-52.5, 9), .3, 2, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-38,-55, 9), 5, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(23, -20.5, 9), .3, 14.5, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(27, -25, 9), 3.5, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(37.5, -25, 9), 3.5, .3, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-13, -9, 7), 1, 1, 1))
+        wall_collision_node.addSolid(CollisionBox(Point3(8.5, -33, 6), 4.5, 1, .75))
+        wall_collision_node.addSolid(CollisionBox(Point3(-10, -33, 6), 4.5, 1, .75))
+        wall_collision_node.addSolid(CollisionBox(Point3(-17.5, -30, 6), 1, 4, 4))
+        wall_collision_node.addSolid(CollisionBox(Point3(-35, -34, 6), 7, 3, .75))
         wall_collision_node_path = self.render.attachNewNode(wall_collision_node)
-        wall_collision_node_path.show()
-        
+#        wall_collision_node_path.show()
+
     def __init__(self):
         super().__init__()
         
         Manor = self.loader.loadModel(r"models/HauntedMansion.glb")
         Manor.reparentTo(self.render)
         Manor.setHpr(90, 90, 90)
-        
         cam_controller = CameraControllerBehaviour(self.camera)
         cam_controller.setup(keys={'w':"forward",
             's':"backward",
@@ -180,10 +196,8 @@ class MyApp(ShowBase):
         camera_collision_node_path = self.camera.attachNewNode(camera_collision_node)
         self.cTrav.addCollider(camera_collision_node_path, self.pusher)
         self.pusher.addCollider(camera_collision_node_path, self.camera)
-
         # Create a collision node for a wall
         MyApp.createwalls(self)
-
 if __name__ == "__main__":
     app = MyApp()
     app.run()
