@@ -2,9 +2,9 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from direct.controls.InputState import InputState
-from panda3d.core import CollisionTraverser, BitMask32, CollisionHandlerEvent, CollisionNode, CollisionHandlerPusher, CollisionBox, Point3, CollisionSphere, LVector3, CollisionPolygon, WindowProperties
+from panda3d.core import CollisionTraverser, CollisionRay, BitMask32, CollisionHandlerQueue, CollisionHandlerEvent, CollisionNode, CollisionHandlerPusher, CollisionBox, Point3, CollisionSphere, LVector3, CollisionPolygon, WindowProperties
 from panda3d.physics import *
-from panda3d.ai import AIWorld, AICharacter, Flock
+from panda3d.ai import AIWorld, AICharacter
 import direct.gui.DirectGuiGlobals as DGG
 from direct.actor.Actor import Actor
 from direct.gui.DirectGui import *
@@ -135,11 +135,173 @@ class CameraControllerBehaviour(DirectObject):
         return Task.cont
         
 class MyApp(ShowBase):
+    def spawnatdoor1(self, task):
+        if (round(self.camera.getX()) == -1) and (round(self.camera.getY()) == -34):
+            self.spawnnpcs(2, -.8, -34)
+            return Task.done
+        return Task.cont
+    def spawnatdoor2(self, task):
+        if (round(self.camera.getX()) == 14) and (round(self.camera.getY()) == -49):
+            self.spawnnpcs(2, 14, -49)
+            return Task.done
+        return Task.cont
+    def spawnatdoor3(self, task):
+        if (round(self.camera.getX()) == -15) and (round(self.camera.getY()) == -20):
+            self.spawnnpcs(2, -15, -21)
+            return Task.done
+        return Task.cont
+    def spawnatdoor4(self, task):
+        if (round(self.camera.getX()) == -21) and (round(self.camera.getY()) == -16):
+            self.spawnnpcs(1, -21, -16)
+            return Task.done
+        return Task.cont
+    def spawnatdoor5(self, task):
+        if (round(self.camera.getX()) == -33) and (round(self.camera.getY()) == -49):
+            self.spawnnpcs(1, -33, -49)
+            return Task.done
+        return Task.cont
+    def spawnatdoor6(self, task):
+        if (round(self.camera.getX()) == 32) and (round(self.camera.getY()) == -25):
+            self.spawnnpcs(1, 32, -25)
+            return Task.done
+        return Task.cont
+    def cast_spell(self):
+        print("Casting spell...")
+
+        # Create a CollisionRay for the wand
+        ray_node = CollisionNode('wand-ray')
+        ray = CollisionRay()
+        ray.setOrigin(0, 0, 0)  # Start at the camera
+        ray.setDirection(0, 1, 0)  # Point forward
+        ray_node.addSolid(ray)
+
+        ray_path = self.camera.attachNewNode(ray_node)
+        ray_node.setFromCollideMask(BitMask32.bit(0))
+        ray_node.setIntoCollideMask(BitMask32.allOff())
+
+        collision_queue = CollisionHandlerQueue()
+        self.cTrav.addCollider(ray_path, collision_queue)
+
+        # Perform collision traversal
+        self.cTrav.traverse(self.render)
+
+        try:
+            # Process collisions
+            num_collisions = collision_queue.getNumEntries()
+
+            if num_collisions > 1:
+                collision_queue.sortEntries()
+                entry = collision_queue.getEntry(1)  # Get the closest collision
+                hit_node = entry.getIntoNode()
+
+                # Find the ghost that was hit
+                ghosts_to_remove = []  # Queue for ghosts to remove
+                for ghost_name, ghost in self.npcs.items():
+                    ghost_node = ghost.find("**/+CollisionNode")
+                    if not ghost_node.isEmpty() and ghost_node.node() == hit_node:
+                        if not ghost.isEmpty():
+                            ghosts_to_remove.append(ghost_name)
+
+                # Remove ghosts after processing collisions
+                for ghost_name in ghosts_to_remove:
+                    if ghost_name in self.npcs:
+                        self.npchealths[ghost_name] -= 1
+                        print(f"{ghost_name} hit!")
+#                        self.npcs[ghost_name].removeNode()
+#                        del self.npcs[ghost_name]
+#                        print(f"{ghost_name} disappeared!")
+
+        except AssertionError as e:
+            print("AssertionError occurred during collision processing.")
+            print(e)
+
+        # Cleanup
+        self.cTrav.removeCollider(ray_path)  # Remove collider from traverser
+        ray_path.removeNode()  # Safely remove the ray
+        collision_queue.clearEntries()  # Clear the queue
+    def spawnnpcs(self, num_npcs, posx, posy):
+        for a in range(num_npcs):
+            i = self.i
+            self.i += 1
+            npc_name = f"npc{i}"
+            aidotname = f"aidot{i}"
+            aicharname = f"aichar{i}"
+            aicharbehaviorname = f"aibehavior{i}"
+            collidername = f"collider{i}"
+            self.npchealths[npc_name] = 3
+            self.npcs[npc_name] = self.loader.loadModel(r"models/newghost.glb")
+            self.aidotdict[aidotname] = self.loader.loadModel(r'models/aidotupdater.glb')
+            self.aidotdict[aidotname].reparentTo(self.render)
+            self.npcs[npc_name].reparentTo(self.render)
+            self.npcs[npc_name].setPos(posx+i, posy+i, 10)
+            self.aidotdict[aidotname].setPos(posx+i, posy+i, 10)
+            self.npcs[npc_name].lookAt(self.camera)
+            self.npcs[npc_name].setHpr(0,90,0)
+            self.npcs[npc_name].setScale(2,2,2)
+            self.colliderdict[collidername] = CollisionNode(npc_name)
+            self.colliderdict[collidername].addSolid(CollisionSphere(0, 0, 0, 1))
+            self.Aichardict[aicharname] = AICharacter(f"npc{i}", self.aidotdict[aidotname], 100, 0.05, 5)
+            self.Aiworld.addAiChar(self.Aichardict[aicharname])
+            self.Aicharbehaviorsdict[aicharbehaviorname] = self.Aichardict[aicharname].getAiBehaviors()
+            self.Aicharbehaviorsdict[aicharbehaviorname].pursue(self.camera)
+            self.Aicharbehaviorsdict[aicharbehaviorname].arrival(7) #arrival
+            self.npcColliderpath = self.npcs[npc_name].attachNewNode(self.colliderdict[collidername])
+        self.cTrav.addCollider(self.npcColliderpath, self.npcintocam)
+    def loadmodels(self):
+        self.npcs = {}
+        self.aidotdict = {}
+        self.Aichardict = {}
+        self.Aicharbehaviorsdict = {}
+        self.colliderdict = {}
+        self.npchealths = {}
+        self.healthpoints=100
+        self.bar = DirectWaitBar(text="HP", value=100, pos=(-.5, -15, -.8))
+        self.bar['barColor'] = (0, 2, 0, 2)
+        self.bar['text_scale'] = .05
+        self.bar['frameSize'] = (-.5, .5, -.035, .02)
+        self.bar['barRelief']= DGG.SUNKEN
+        # Crosshair setup
+        self.crosshair = OnscreenImage(
+            image="models/crosshair.png",  # Replace with your crosshair image path
+            pos=(0, 0, 0),  # Center of the screen
+            scale=0.05       # Adjust scale for size
+        )
+        self.crosshair.setTransparency(True) 
+        self.Manor = self.loader.loadModel(r"models/HauntedMansion.glb")
+        self.Manor.reparentTo(self.render)
+        self.Manor.setHpr(90, 90, 90)
+        self.cameramodel = self.loader.loadModel(r'models/aidotupdater.glb')
+        self.cameramodel.reparentTo(self.camera)
+        self.wand = self.loader.loadModel("models/basic_wand.glb")
+        self.wand.reparentTo(self.render)
+        self.wand.setScale(.1, .1, .1)
+
+        self.miniboss = self.loader.loadModel(r'models/monster_with_glowing_eyes.glb')
+        self.miniboss.setScale(15,15,15)
+        self.miniboss.setHpr(0,90,0)
+        self.miniboss.setPos(0, 10, 10)
+        self.miniboss.reparentTo(self.render)
+        self.cameramodel.setPos(0, -18, 14)
+        self.camera.setPos(0, -18, 14)
+        # Create a collision traverser
+        self.cTrav = CollisionTraverser()
+        # Create a collision handler
+        self.pusher = CollisionHandlerPusher()
+        self.pusher.addInPattern("%fn-into-wall")
+        for npc, collidername in zip(self.npcs.values(), self.colliderdict.values()):
+                self.npcColliderpath = npc.attachNewNode(collidername)
+        self.npcintocam = CollisionHandlerEvent()
+        self.npcintocam.addInPattern('into-camera')
+        # Create a collision node for the camera
+        camera_collision_node = CollisionNode('camera')
+        camera_collision_node.addSolid(CollisionSphere(0, 0, 0, 1.25))
+        camera_collision_node_path = self.camera.attachNewNode(camera_collision_node)
+        self.cTrav.addCollider(camera_collision_node_path, self.pusher) 
+        self.pusher.addCollider(camera_collision_node_path, self.camera)
     def Dmgbynpc(self, task):
         print('damage')
         self.healthpoints-=1
         print(self.healthpoints)
-        
     def createwalls(self):
         self.wall_collision_node = CollisionNode('wall')
         self.wall_collision_node.addSolid(CollisionBox(Point3(22, -6.5, 32), 19, .5, 27))
@@ -236,82 +398,68 @@ class MyApp(ShowBase):
 
         self.wall_collision_node_path = self.render.attachNewNode(self.wall_collision_node)
 #        self.wall_collision_node_path.show()
-    def setAI(self):
-        self.npcs = {}
-        self.aidotdict = {}
-        self.Aichardict = {}
-        self.Aicharbehaviorsdict = {}
-        self.colliderdict = {}
+    def set(self):
         self.Aiworld = AIWorld(self.render)
-        for i in range(4):
-            npc_name = f"npc{i}"
-            aidotname = f"aidot{i}"
-            aicharname = f"aichar{i}"
-            aicharbehaviorname = f"aibehavior{i}"
-            collidername = f"collider{i}"
-            self.npcs[npc_name] = self.loader.loadModel(r"models/newghost.glb")
-            self.aidotdict[aidotname] = self.loader.loadModel(r'models/aidotupdater.glb')
-            self.aidotdict[aidotname].reparentTo(self.render)
-            self.npcs[npc_name].reparentTo(self.render)
-            self.npcs[npc_name].setPos(i*10, i*5, 10)
-            self.aidotdict[aidotname].setPos(i*10, 0, 10)
-            self.npcs[npc_name].lookAt(self.camera)
-            self.npcs[npc_name].setHpr(0,90,0)
-            self.npcs[npc_name].setScale(2,2,2)
-            self.colliderdict[collidername] = CollisionNode(npc_name)
-            self.colliderdict[collidername].addSolid(CollisionSphere(0, 0, 0, 1))
-            self.Aichardict[aicharname] = AICharacter(f"npc{i}", self.aidotdict[aidotname], 100, 0.05, 5)
-            self.Aiworld.addAiChar(self.Aichardict[aicharname])
-            self.Aicharbehaviorsdict[aicharbehaviorname] = self.Aichardict[aicharname].getAiBehaviors()
-            self.Aicharbehaviorsdict[aicharbehaviorname].pursue(self.camera)
-            self.Aicharbehaviorsdict[aicharbehaviorname].arrival(10) #arrival
+        self.i = 0
         #AI World update
         taskMgr.add(self.Update,"Update")
-
-    #to update the AIWorld
+        taskMgr.add(self.spawnatdoor1,"spawnatdoor1")
+        taskMgr.add(self.spawnatdoor2,"spawnatdoor2")
+        taskMgr.add(self.spawnatdoor3,"spawnatdoor3")
+        taskMgr.add(self.spawnatdoor4,"spawnatdoor4")
+        taskMgr.add(self.spawnatdoor5,"spawnatdoor5")
+        taskMgr.add(self.spawnatdoor6,"spawnatdoor6")
     def Update(self,task):
-        for npc, aidot in zip(self.npcs.values(), self.aidotdict.values()):
+        camera_forward = self.camera.getQuat(self.render).getForward()
+        camera_up = self.camera.getQuat(self.render).getUp()
+        camera_right = self.camera.getQuat(self.render).getRight()
+        camera_position = self.camera.getPos(self.render)
+#        print(camera_position)
+        # Calculate wand position: forward, slightly downward, and to the right
+        wand_position = (
+            camera_position +
+            camera_forward * 1.5 -  # Forward by 1.0 units
+            camera_up * 0.5 +       # Downward by 0.5 units
+            camera_right * 0.4      # Rightward by 0.3 units
+        )
+        self.wand.setPos(wand_position)
+        self.wand.setHpr(self.camera.getH(), 60, 10)  
+        # Set the wand's orientation to be vertical
+        def update_npc_position(npc, aidot):
             npc.setH(aidot.getH())
             aidot.setZ(8)
             npc.setPos(aidot.getPos())
+        for npc, aidot in zip(self.npcs.values(), self.aidotdict.values()):
+            if not npc.isEmpty() and not aidot.isEmpty():
+                update_npc_position(npc, aidot)
         # Separation logic to prevent NPC overlap
-        separation_threshold = 7  # Minimum distance between NPCs
-        repelling_force = 2  # Strength of the repelling force
-
-        npc_positions = {name: npc.getPos(self.render) for name, npc in self.npcs.items()}
-        for name_a, pos_a in npc_positions.items():
-            for name_b, pos_b in npc_positions.items():
-                if name_a != name_b:
-                    distance = (pos_a - pos_b).length()
-                    if distance < separation_threshold:
-                    # Calculate repelling direction
-                        direction = pos_a - pos_b
-                        direction.normalize()
-                    # Apply the repelling force
-                        new_pos = pos_a + direction * repelling_force
-                        self.npcs[name_a].setPos(new_pos)
+            separation_threshold = 5  # Minimum distance between NPCs
+            repelling_force = 2  # Strength of the repelling force
+            npc_positions = {name: npc.getPos(self.render) for name, npc in self.npcs.items() if not npc.isEmpty()}
+            for name_a, pos_a in npc_positions.items():
+                for name_b, pos_b in npc_positions.items():
+                    if name_a != name_b:
+                        distance = (pos_a - pos_b).length()
+                        if distance < separation_threshold:
+                        # Calculate repelling direction
+                            direction = pos_a - pos_b
+                            direction.normalize()
+                        # Apply the repelling force
+                            new_pos = pos_a + direction * repelling_force
+                            self.npcs[name_a].setPos(new_pos)
         self.bar['value'] = self.healthpoints
         self.Aiworld.update()
+        npcs_to_remove = []
+        for key, health in self.npchealths.items():
+            if health == 0:
+                npcs_to_remove.append(key)
+        for health in npcs_to_remove:
+            self.npcs[health].removeNode()
+            del self.npcs[health]
+            del self.npchealths[health]
         return Task.cont
     def __init__(self):
         super().__init__()
-        self.healthpoints=100
-        self.bar = DirectWaitBar(text="HP", value=100, pos=(-.5, -15, -.8))
-        self.bar['barColor'] = (0, 2, 0, 2)
-        self.bar['text_scale'] = .05
-        self.bar['frameSize'] = (-.5, .5, -.035, .02)
-        self.bar['barRelief']= DGG.RAISED        
-        self.Manor = self.loader.loadModel(r"models/HauntedMansion.glb")
-        self.Manor.reparentTo(self.render)
-        self.Manor.setHpr(90, 90, 90)
-        self.cameramodel = self.loader.loadModel(r'models/aidotupdater.glb')
-        self.cameramodel.reparentTo(self.camera)
-
-        self.miniboss = self.loader.loadModel(r'models/monster_with_glowing_eyes.glb')
-        self.miniboss.setScale(15,15,15)
-        self.miniboss.setHpr(0,90,0)
-        self.miniboss.setPos(0, 10, 10)
-        self.miniboss.reparentTo(self.render)
         cam_controller = CameraControllerBehaviour(self.camera, velocity=9, mouse_sensitivity=.2)
         cam_controller.setup(keys={'w':"forward",
             's':"backward",
@@ -319,28 +467,11 @@ class MyApp(ShowBase):
             'd':"right",
             'space':"up",
             'e':"down"})
-        # Create a collision traverser
-        self.cTrav = CollisionTraverser()
-        # Create a collision handler
-        self.pusher = CollisionHandlerPusher()
-        self.pusher.addInPattern("%fn-into-wall")
-        self.setAI()
-        for npc, collidername in zip(self.npcs.values(), self.colliderdict.values()):
-            self.npcColliderpath = npc.attachNewNode(collidername)
-        self.npcintocam = CollisionHandlerEvent()
-        self.npcintocam.addInPattern('into-camera')
-        self.cTrav.removeCollider(self.npcColliderpath)
-        self.cTrav.addCollider(self.npcColliderpath, self.npcintocam)
-        # Create a collision node for the camera
-        camera_collision_node = CollisionNode('camera')
-        camera_collision_node.addSolid(CollisionSphere(0, 0, 0, 1.25))
-        camera_collision_node_path = self.camera.attachNewNode(camera_collision_node)
-        self.cTrav.addCollider(camera_collision_node_path, self.pusher) 
-        self.pusher.addCollider(camera_collision_node_path, self.camera)
-
+        self.loadmodels()
+        self.set()
+        self.accept('mouse1', self.cast_spell)
         self.accept('into-camera', self.Dmgbynpc)
         # Create a collision node for a wall
         MyApp.createwalls(self)
-
 w = MyApp()
 base.run()
