@@ -137,10 +137,49 @@ class CameraControllerBehaviour(DirectObject):
         return Task.cont
         
 class MyApp(ShowBase):
+    password = ""
+    def passwordcheck(self, task):
+        if self.password == "1234":
+            print("Password Correct")
+            return Task.done
+        return Task.cont
+    def safenumpad(self):
+        self.cam_controller.disable()
+        self.password = ""
+        def setnumber1():
+            self.password += "1"
+        def setnumber2():
+            self.password += "2"
+        def setnumber3():
+            self.password += "3"
+        def setnumber4():
+            self.password += "4"
+        def setnumber5():
+            self.password += "5"
+        def setnumber6():
+            self.password += "6"
+        def setnumber7():
+            self.password += "7"
+        def setnumber8():
+            self.password += "8"
+        def setnumber9():
+            self.password += "9"
+        def setnumber0():
+            self.password += "0"
+        onebutton = DirectButton(text=("1", "1", "1", "disabled"), scale=.2, command=setnumber1, pos = (-.45, -10, .3))
+        twobutton = DirectButton(text=("2", "2", "2", "disabled"), scale=.2, command=setnumber2, pos = (-.05, -10, .3))
+        threebutton = DirectButton(text=("3", "3", "3", "disabled"), scale=.2, command=setnumber3, pos = (.35, -10, .3))
+        fourbutton = DirectButton(text=("4", "4", "4", "disabled"), scale=.2, command=setnumber4, pos = (-.45, -10, 0))
+        fivebutton = DirectButton(text=("5", "5", "5", "disabled"), scale=.2, command=setnumber5, pos = (-.05, -10, 0))
+        sixbutton = DirectButton(text=("6", "6", "6", "disabled"), scale=.2, command=setnumber6, pos = (.35, -10, 0))
+        sevenbutton = DirectButton(text=("7", "7", "7", "disabled"), scale=.2, command=setnumber7, pos = (-.45, -10, -.3))
+        eightbutton = DirectButton(text=("8", "8", "8", "disabled"), scale=.2, command=setnumber8, pos = (-.05, -10, -.3))
+        ninebutton = DirectButton(text=("9", "9", "9", "disabled"), scale=.2, command=setnumber9, pos = (.35, -10, -.3))
+        zerobutton = DirectButton(text=("0", "0", "0", "disabled"), scale=.2, command=setnumber0, pos = (-.05, -10, -.6))
+#        enterbutton = DirectButton(text=("respawn", "fine", "do you really?", "disabled"), scale=.1, command=reset, pos = (0, -10, -.8))
     def manaupdate(self, task):
         self.manaamount = self.manaamount + .01
         self.manabar['value'] = self.manaamount
-
         return Task.cont
     def death(self):    
         transitions = Transitions(loader=self.render)
@@ -236,9 +275,6 @@ class MyApp(ShowBase):
                             self.npchealths[ghost_name] -= 1
                             print(f"{ghost_name} hit!")
                             self.manaamount -= 3
-#                        self.npcs[ghost_name].removeNode()
-#                        del self.npcs[ghost_name]
-#                        print(f"{ghost_name} disappeared!")
 
         except AssertionError as e:
             print("AssertionError occurred during collision processing.")
@@ -431,20 +467,25 @@ class MyApp(ShowBase):
         self.wall_collision_node.addSolid(CollisionBox(Point3(14.6, -33.75, 17), .7, .7, 25))
 
         self.wall_collision_node_path = self.render.attachNewNode(self.wall_collision_node)
-#        self.wall_collision_node_path.show()
+        self.wall_collision_node_path.show()
     def set(self):
         self.Aiworld = AIWorld(self.render)
         self.i = 0
+        self.died = False
+        self.safe_node = CollisionNode('safe')
+        self.safe_node.addSolid(CollisionBox(Point3(-28, -11 , 6), 1, 1, 1))
+        self.self_node_path = self.render.attachNewNode(self.self_node)
         #AI World update
         taskMgr.add(self.Update,"Update")
         taskMgr.add(self.spawnatdoors,"spawnatdoors")
         taskMgr.add(self.manaupdate,"manaupdate")
+        taskMgr.add(self.passwordcheck,"PasswordCheck")
     def Update(self,task):
         camera_forward = self.camera.getQuat(self.render).getForward()
         camera_up = self.camera.getQuat(self.render).getUp()
         camera_right = self.camera.getQuat(self.render).getRight()
         camera_position = self.camera.getPos(self.render)
-#        print(camera_position)
+        print(camera_position)
         # Calculate wand position: forward, slightly downward, and to the right
         wand_position = (
             camera_position +
@@ -491,7 +532,6 @@ class MyApp(ShowBase):
             self.npcs[health].removeNode()
             del self.npcs[health]
             del self.npchealths[health]
-        print(self.npcs)
         return Task.cont
     def __init__(self):
         super().__init__()
@@ -504,7 +544,6 @@ class MyApp(ShowBase):
             'e':"down"})
         self.loadmodels()
         self.set()
-        self.died = False
         self.accept('mouse1', self.click)
         self.accept('into-camera', self.Dmgbynpc)
         # Create a collision node for a wall
