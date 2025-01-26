@@ -259,7 +259,9 @@ class MyApp(ShowBase):
                 collision_queue.sortEntries()
                 entry = collision_queue.getEntry(1)  # Get the closest collision
                 hit_node = entry.getIntoNode()
-
+                if hit_node == self.safe_node:
+                    print("safe")
+                    self.safenumpad()
                 # Find the ghost that was hit
                 ghosts_to_remove = []  # Queue for ghosts to remove
                 for ghost_name, ghost in self.npcs.items():
@@ -467,14 +469,15 @@ class MyApp(ShowBase):
         self.wall_collision_node.addSolid(CollisionBox(Point3(14.6, -33.75, 17), .7, .7, 25))
 
         self.wall_collision_node_path = self.render.attachNewNode(self.wall_collision_node)
-        self.wall_collision_node_path.show()
+#        self.wall_collision_node_path.show()
     def set(self):
         self.Aiworld = AIWorld(self.render)
         self.i = 0
         self.died = False
         self.safe_node = CollisionNode('safe')
         self.safe_node.addSolid(CollisionBox(Point3(-28, -11 , 6), 1, 1, 1))
-        self.self_node_path = self.render.attachNewNode(self.self_node)
+        self.safe_node_path = self.render.attachNewNode(self.safe_node)
+        self.safe_node_path.show()
         #AI World update
         taskMgr.add(self.Update,"Update")
         taskMgr.add(self.spawnatdoors,"spawnatdoors")
@@ -485,7 +488,7 @@ class MyApp(ShowBase):
         camera_up = self.camera.getQuat(self.render).getUp()
         camera_right = self.camera.getQuat(self.render).getRight()
         camera_position = self.camera.getPos(self.render)
-        print(camera_position)
+#        print(camera_position)
         # Calculate wand position: forward, slightly downward, and to the right
         wand_position = (
             camera_position +
