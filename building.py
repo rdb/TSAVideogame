@@ -5,8 +5,6 @@ from direct.controls.InputState import InputState
 from panda3d.core import CollisionTraverser, CollisionRay, BitMask32, CollisionHandlerQueue, CollisionHandlerEvent, CollisionNode, CollisionHandlerPusher, CollisionBox, Point3, CollisionSphere, LVector3, CollisionPolygon, WindowProperties
 from panda3d.ai import AIWorld, AICharacter
 import direct.gui.DirectGuiGlobals as DGG
-from direct.task.Timer import Timer
-from direct.actor.Actor import Actor
 from direct.gui.DirectGui import *
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.showbase.Transitions import Transitions
@@ -138,13 +136,47 @@ class CameraControllerBehaviour(DirectObject):
         
 class MyApp(ShowBase):
     password = ""
-    def passwordcheck(self, task):
-        if self.password == "1234":
-            print("Password Correct")
-            return Task.done
+#    def finalboss(self):
+#        self.finalmodel = self.loader.loadModel(r"models/Ghoooooost.glb")
+#        self.finalmodel.reparentTo(self.render)
+#        self.finalmodel.setScale(10)
+#        self.finalmodel.setPos(0, 0, 10)
+#        self.finalmodel.setHpr(0, 90, 90)
+#        self.finalbosscollison = CollisionNode("finalbosscollison")
+#        self.finalbosscollison.addSolid(CollisionSphere(0, 0, 0, 10))
+#        self.finalbosscollisonpath = self.finalmodel.attachNewNode(self.finalbosscollison)
+#        self.cTrav.addCollider(self.finalbosscollisonpath, self.npcintocam)
+#        self.finalbossaicharacter = AICharacter()
+    def keyposupdate(self, task):
+        self.onebutton.destroy()
+        self.twobutton.destroy()
+        self.threebutton.destroy()
+        self.fourbutton.destroy()
+        self.fivebutton.destroy()
+        self.sixbutton.destroy()
+        self.sevenbutton.destroy()
+        self.eightbutton.destroy()
+        self.ninebutton.destroy()
+        self.zerobutton.destroy()
+        self.clearbutton.destroy()
+        self.enterbutton.destroy()
+        camera_forward = self.camera.getQuat(self.render).getForward()
+        camera_up = self.camera.getQuat(self.render).getUp()
+        camera_left = self.camera.getQuat(self.render).getRight()
+        camera_position = self.camera.getPos(self.render)
+        key_position = (
+            camera_position +
+            camera_forward * 1.5 -  # Forward by 1.0 units
+            camera_up * 0.5 +       # Downward by 0.5 units
+            camera_left * -0.4      # Rightward by 0.3 units
+        )
+        self.keymodel.setPos(key_position)
+        self.keymodel.setHpr(self.camera.getH(), 60, 10)  
         return Task.cont
     def safenumpad(self):
         self.cam_controller.disable()
+        self.keymodel = self.loader.loadModel(r"models/key.glb")
+        self.keyimage = ()
         self.password = ""
         def setnumber1():
             self.password += "1"
@@ -166,17 +198,31 @@ class MyApp(ShowBase):
             self.password += "9"
         def setnumber0():
             self.password += "0"
-        onebutton = DirectButton(text=("1", "1", "1", "disabled"), scale=.2, command=setnumber1, pos = (-.45, -10, .3))
-        twobutton = DirectButton(text=("2", "2", "2", "disabled"), scale=.2, command=setnumber2, pos = (-.05, -10, .3))
-        threebutton = DirectButton(text=("3", "3", "3", "disabled"), scale=.2, command=setnumber3, pos = (.35, -10, .3))
-        fourbutton = DirectButton(text=("4", "4", "4", "disabled"), scale=.2, command=setnumber4, pos = (-.45, -10, 0))
-        fivebutton = DirectButton(text=("5", "5", "5", "disabled"), scale=.2, command=setnumber5, pos = (-.05, -10, 0))
-        sixbutton = DirectButton(text=("6", "6", "6", "disabled"), scale=.2, command=setnumber6, pos = (.35, -10, 0))
-        sevenbutton = DirectButton(text=("7", "7", "7", "disabled"), scale=.2, command=setnumber7, pos = (-.45, -10, -.3))
-        eightbutton = DirectButton(text=("8", "8", "8", "disabled"), scale=.2, command=setnumber8, pos = (-.05, -10, -.3))
-        ninebutton = DirectButton(text=("9", "9", "9", "disabled"), scale=.2, command=setnumber9, pos = (.35, -10, -.3))
-        zerobutton = DirectButton(text=("0", "0", "0", "disabled"), scale=.2, command=setnumber0, pos = (-.05, -10, -.6))
-#        enterbutton = DirectButton(text=("respawn", "fine", "do you really?", "disabled"), scale=.1, command=reset, pos = (0, -10, -.8))
+        def clearpassword():
+            self.password = ""     
+        self.onebutton = DirectButton(text=("1", "1", "1", "disabled"), scale=.2, command=setnumber1, pos = (-.45, -10, .3))
+        self.twobutton = DirectButton(text=("2", "2", "2", "disabled"), scale=.2, command=setnumber2, pos = (-.05, -10, .3))
+        self.threebutton = DirectButton(text=("3", "3", "3", "disabled"), scale=.2, command=setnumber3, pos = (.35, -10, .3))
+        self.fourbutton = DirectButton(text=("4", "4", "4", "disabled"), scale=.2, command=setnumber4, pos = (-.45, -10, 0))
+        self.fivebutton = DirectButton(text=("5", "5", "5", "disabled"), scale=.2, command=setnumber5, pos = (-.05, -10, 0))
+        self.sixbutton = DirectButton(text=("6", "6", "6", "disabled"), scale=.2, command=setnumber6, pos = (.35, -10, 0))
+        self.sevenbutton = DirectButton(text=("7", "7", "7", "disabled"), scale=.2, command=setnumber7, pos = (-.45, -10, -.3))
+        self.eightbutton = DirectButton(text=("8", "8", "8", "disabled"), scale=.2, command=setnumber8, pos = (-.05, -10, -.3))
+        self.ninebutton = DirectButton(text=("9", "9", "9", "disabled"), scale=.2, command=setnumber9, pos = (.35, -10, -.3))
+        self.zerobutton = DirectButton(text=("0", "0", "0", "disabled"), scale=.2, command=setnumber0, pos = (-.05, -10, -.6))
+        self.clearbutton = DirectButton(text=("clear", "clear", "clear", "disabled"), scale=.1, command=clearpassword, pos = (-.45, -10, -.6))
+        def checkpassword():
+            if self.password == "1234":
+                self.keymodel = self.loader.loadModel(r"models/key.glb")
+                self.keyimage = OnscreenImage(image = r"models/key.png", pos = (-.8, 0, .8), scale = (.1, .1, .1))
+                self.haskey = True
+                self.keyimage.setTransparency(True)
+                self.keymodel.reparentTo(self.render)
+                self.keymodel.setScale(4)
+                self.cam_controller.setup()
+                taskMgr.add(self.keyposupdate, "keyposupdate")
+                print("Password Correct")
+        self.enterbutton = DirectButton(text=("enter", "enter", "enter", "disabled"), scale=.1, command=checkpassword, pos = (.35, -10, -.6))
     def manaupdate(self, task):
         self.manaamount = self.manaamount + .01
         self.manabar['value'] = self.manaamount
@@ -209,8 +255,7 @@ class MyApp(ShowBase):
             self.cam_controller.setup()
             self.camera.setPos(0, -18, 14)
         respawnbutton = DirectButton(text=("respawn", "fine", "do you really?", "disabled"),
-            scale=.1, command=reset, pos = (0, -10, -.8))
-            
+            scale=.1, command=reset, pos = (0, -10, -.8))           
     def spawnatdoors(self, task):
         self.b=2
         if task.time < 1.8:
@@ -262,6 +307,8 @@ class MyApp(ShowBase):
                 if hit_node == self.safe_node:
                     print("safe")
                     self.safenumpad()
+                if hit_node == self.upstairdoor_collision_node and self.haskey == True:
+                    self.upstairdoor_collision_node.removeSolid(0)
                 # Find the ghost that was hit
                 ghosts_to_remove = []  # Queue for ghosts to remove
                 for ghost_name, ghost in self.npcs.items():
@@ -313,6 +360,7 @@ class MyApp(ShowBase):
             self.Aicharbehaviorsdict[aicharbehaviorname].pursue(self.camera)
             self.Aicharbehaviorsdict[aicharbehaviorname].arrival(7) #arrival
             self.npcColliderpath = self.npcs[npc_name].attachNewNode(self.colliderdict[collidername])
+        self.i = 0
         self.cTrav.addCollider(self.npcColliderpath, self.npcintocam)
     def loadmodels(self):
         self.npcs = {}
@@ -348,11 +396,6 @@ class MyApp(ShowBase):
         self.wand = self.loader.loadModel("models/basic_wand.glb")
         self.wand.reparentTo(self.render)
         self.wand.setScale(.1, .1, .1)
-        self.miniboss = self.loader.loadModel(r'models/monster_with_glowing_eyes.glb')
-        self.miniboss.setScale(15,15,15)
-        self.miniboss.setHpr(0,90,0)
-        self.miniboss.setPos(0, 10, 10)
-        self.miniboss.reparentTo(self.render)
         self.cameramodel.setPos(0, -18, 14)
         self.camera.setPos(0, -18, 14)
         # Create a collision traverser
@@ -376,6 +419,9 @@ class MyApp(ShowBase):
         print(self.healthpoints)
     def createwalls(self):
         self.wall_collision_node = CollisionNode('wall')
+        self.upstairdoor_collision_node = CollisionNode('upstairdoor')
+        self.upstairdoor_collision_node.addSolid(CollisionBox(Point3(14, -9.5, 9), .5, 8, 4))
+        self.upstairdoor_collision_node_path = self.render.attachNewNode(self.upstairdoor_collision_node)
         self.wall_collision_node.addSolid(CollisionBox(Point3(22, -6.5, 32), 19, .5, 27))
         self.wall_collision_node.addSolid(CollisionBox(Point3(-23.5, -6.5, 32), 19, .5, 27))
         self.wall_collision_node.addSolid(CollisionBox(Point3(0, -6.5, 35), 10, .5, 25))
@@ -469,7 +515,6 @@ class MyApp(ShowBase):
         self.wall_collision_node.addSolid(CollisionBox(Point3(14.6, -33.75, 17), .7, .7, 25))
 
         self.wall_collision_node_path = self.render.attachNewNode(self.wall_collision_node)
-#        self.wall_collision_node_path.show()
     def set(self):
         self.Aiworld = AIWorld(self.render)
         self.i = 0
@@ -478,11 +523,10 @@ class MyApp(ShowBase):
         self.safe_node.addSolid(CollisionBox(Point3(-28, -11 , 6), 1, 1, 1))
         self.safe_node_path = self.render.attachNewNode(self.safe_node)
         self.safe_node_path.show()
-        #AI World update
+        #AI World updated
         taskMgr.add(self.Update,"Update")
         taskMgr.add(self.spawnatdoors,"spawnatdoors")
         taskMgr.add(self.manaupdate,"manaupdate")
-        taskMgr.add(self.passwordcheck,"PasswordCheck")
     def Update(self,task):
         camera_forward = self.camera.getQuat(self.render).getForward()
         camera_up = self.camera.getQuat(self.render).getUp()
@@ -533,7 +577,14 @@ class MyApp(ShowBase):
                 npcs_to_remove.append(key)
         for health in npcs_to_remove:
             self.npcs[health].removeNode()
+            self.aidotdict[('aidot')+health[-1:]].removeNode()
+            self.Aiworld.removeAiChar(('aichar')+health[-1:])
+            self.Aicharbehaviorsdict['aibehavior'+health[-1:]].removeAi(('aibehavior')+health[-1:])
             del self.npcs[health]
+            del self.aidotdict[('aidot')+health[-1:]]
+            del self.Aichardict[('aichar')+health[-1:]]
+            del self.Aicharbehaviorsdict[('aibehavior')+health[-1:]]
+            del self.colliderdict[('collider')+health[-1:]]
             del self.npchealths[health]
         return Task.cont
     def __init__(self):
