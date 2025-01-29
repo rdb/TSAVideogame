@@ -95,7 +95,7 @@ class EmscriptenEnvironment:
         debugFlags = f"{debugFlags} -g{DEBUG_LEVEL}"
 
     compileObj = f"emcc {debugFlags} -fno-exceptions -fno-rtti -c -o %(basename)s.o %(filename)s -I{pythonInc}"
-    linkExe = f"emcc {debugFlags} -s INITIAL_HEAP={INITIAL_HEAP} -s STACK_SIZE={STACK_SIZE} -s ASSERTIONS={ASSERTIONS} -s MAX_WEBGL_VERSION=2 -s NO_EXIT_RUNTIME=1 -fno-exceptions -fno-rtti -o %(basename)s.html %(basename)s.o {modStr} {pythonLib} {pandaFlags}"
+    linkExe = f"emcc {debugFlags} -s INITIAL_HEAP={INITIAL_HEAP} -s STACK_SIZE={STACK_SIZE} -s ASSERTIONS={ASSERTIONS} -s MAX_WEBGL_VERSION=2 -s NO_EXIT_RUNTIME=1 -fno-exceptions -fno-rtti -o %(basename)s.js %(basename)s.o {modStr} {pythonLib} {pandaFlags}"
     linkDll = f"emcc -O2 -shared -o %(basename)s.o %(basename)s.o {pythonLib}"
 
     compileObj += f" -DPY_VERBOSE={int(PY_VERBOSE)}"
