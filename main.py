@@ -132,7 +132,7 @@ class CameraControllerBehaviour(DirectObject):
         
         self.cam_pos = self._showbase.camera.getPos(self._showbase.render)
         # Apply gravity to the camera's position
-        (self.cam_pos) += self._gravity * dt
+        (self.cam_pos) += self._gravity * min(dt, 1/30.0)
         
         # Update the camera's position
         self._showbase.camera.setPos(self.cam_pos)
