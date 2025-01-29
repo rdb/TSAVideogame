@@ -135,7 +135,13 @@ class CameraControllerBehaviour(DirectObject):
         return Task.cont
         
 class MyApp(ShowBase):
+    
     password = ""
+    def tutorial(self, task):
+        if int(task.time) < 5:
+            return Task.cont
+        self.start == False
+        return Task.done
 #    def finalboss(self):
 #        self.finalmodel = self.loader.loadModel(r"models/Ghoooooost.glb")
 #        self.finalmodel.reparentTo(self.render)
@@ -256,28 +262,8 @@ class MyApp(ShowBase):
             self.camera.setPos(0, -18, 14)
         respawnbutton = DirectButton(text=("respawn", "fine", "do you really?", "disabled"),
             scale=.1, command=reset, pos = (0, -10, -.8))           
-    def spawnatdoors(self, task):
-        self.b=2
-        if task.time < 1.8:
-            return Task.cont
-        if (round(self.camera.getX()) == -1) and (round(self.camera.getY()) == -34):
-
-            self.spawnnpcs(self.b, -.8, -34)
-        if (round(self.camera.getX()) == 14) and (round(self.camera.getY()) == -49):
-
-            self.spawnnpcs(self.b, 14, -49)
-        if (round(self.camera.getX()) == -15) and (round(self.camera.getY()) == -20):
-            self.spawnnpcs (self.b, -15, -21)
-        if (round(self.camera.getX()) == -21) and (round(self.camera.getY()) == -16):
-
-            self.spawnnpcs(self.b, -21, -16)
-        if (round(self.camera.getX()) == -33) and (round(self.camera.getY()) == -49):
-
-            self.spawnnpcs(self.b, -33, -49)
-        if (round(self.camera.getX()) == 32) and (round(self.camera.getY()) == -25):
-
-            self.spawnnpcs(self.b, 32, -25)
-        return Task.cont
+    def spawnateachdoor(self, num_npcs):
+        self.spawnnpcs(num_npcs*4, 14, -49)
     def click(self):
         # Create a CollisionRay for the wand
         ray_node = CollisionNode('wand-ray')
@@ -328,13 +314,15 @@ class MyApp(ShowBase):
         except AssertionError as e:
             print("AssertionError occurred during collision processing.")
             print(e)
-
+        except KeyError as e:
+            print("KeyError occurred during collision processing.")
+            pass
         # Cleanup
         self.cTrav.removeCollider(ray_path)  # Remove collider from traverser
         ray_path.removeNode()  # Safely remove the ray
         collision_queue.clearEntries()  # Clear the queue
     def spawnnpcs(self, num_npcs, posx, posy):
-        for a in range(self.b):
+        for a in range(num_npcs):
             i = self.i
             self.i += 1
             npc_name = f"npc{i}"
@@ -519,13 +507,14 @@ class MyApp(ShowBase):
         self.Aiworld = AIWorld(self.render)
         self.i = 0
         self.died = False
+        self.waves = 1
         self.safe_node = CollisionNode('safe')
         self.safe_node.addSolid(CollisionBox(Point3(-28, -11 , 6), 1, 1, 1))
         self.safe_node_path = self.render.attachNewNode(self.safe_node)
         self.safe_node_path.show()
         #AI World updated
         taskMgr.add(self.Update,"Update")
-        taskMgr.add(self.spawnatdoors,"spawnatdoors")
+        taskMgr.add(self.tutorial,"tutorial")
         taskMgr.add(self.manaupdate,"manaupdate")
     def Update(self,task):
         camera_forward = self.camera.getQuat(self.render).getForward()
@@ -572,6 +561,15 @@ class MyApp(ShowBase):
             self.died = True
         self.Aiworld.update()
         npcs_to_remove = []
+        if self.npcs == {} and self.start == False:
+            self.waves += 1
+            self.wavetext = OnscreenText(text="Wave: " + str(self.waves), pos=(0,0.9), scale=0.1, fg=(1, 1, 1, 1), shadow=(0, 0, 0, .5))
+            lowerwaves = (1,2,3,4)
+            higherwaves = (5,6,7,8)
+            if self.waves in lowerwaves:
+                self.spawnateachdoor(num_npcs=2)
+            if self.waves in higherwaves:
+                self.spawnateachdoor(num_npcs=3)
         for key, health in self.npchealths.items():
             if health == 0:
                 npcs_to_remove.append(key)
@@ -589,7 +587,7 @@ class MyApp(ShowBase):
         return Task.cont
     def __init__(self):
         super().__init__()
-        self.cam_controller = CameraControllerBehaviour(self.camera, velocity=9, mouse_sensitivity=.2)
+        self.cam_controller = CameraControllerBehaviour(self.camera, velocity=9, mouse_sensitivity=.02)
         self.cam_controller.setup(keys={'w':"forward",
             's':"backward",
             'a':"left",
@@ -598,9 +596,10 @@ class MyApp(ShowBase):
             'e':"down"})
         self.loadmodels()
         self.set()
+        self.start = True
         self.accept('mouse1', self.click)
         self.accept('into-camera', self.Dmgbynpc)
-        # Create a collision node for a wall
+        # Create a collision node for a walld
         MyApp.createwalls(self)
 w = MyApp()
 base.run()
