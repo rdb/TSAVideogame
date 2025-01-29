@@ -20,6 +20,7 @@ class CameraControllerBehaviour(DirectObject):
         self._pitch = 0.0
         self._yaw = 0.0
         self._roll = 0.0
+        self._prev_mouse = None
         self._showbase = base if showbase is None else showbase
         self._gravity = LVector3(0, 0, -3.8)  # Set gravity vector pointing downward
         self._instance = CameraControllerBehaviour._instances
@@ -43,6 +44,7 @@ class CameraControllerBehaviour(DirectObject):
 
         props = WindowProperties()
         props.setCursorHidden(True)
+        props.setMouseMode(WindowProperties.MRelative)
 
         self._showbase.win.requestProperties(props)
 
@@ -85,12 +87,14 @@ class CameraControllerBehaviour(DirectObject):
         md = self._showbase.win.getPointer(0)
         x = md.getX()
         y = md.getY()
-        center_x = self._showbase.win.getXSize() // 2
-        center_y = self._showbase.win.getYSize() // 2
+        #center_x = self._showbase.win.getXSize() // 2
+        #center_y = self._showbase.win.getYSize() // 2
 
-        if self._showbase.win.movePointer(0, center_x, center_y):
-            self._yaw = self._yaw - (x - center_x) * self._mouse_sensitivity
-            self._pitch = self._pitch - (y - center_y) * self._mouse_sensitivity
+        if self._prev_mouse is not None:
+            prev_x, prev_y = self._prev_mouse
+            self._yaw = self._yaw - (x - prev_x) * self._mouse_sensitivity
+            self._pitch = self._pitch - (y - prev_y) * self._mouse_sensitivity
+        self._prev_mouse = (x, y)
 
         # Clamp the pitch to prevent camera flipping over
         self._pitch = max(-89, min(89, self._pitch))
