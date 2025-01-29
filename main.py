@@ -404,8 +404,8 @@ class MyApp(ShowBase):
         self.wand = self.loader.loadModel("models/basic_wand.glb")
         self.wand.reparentTo(self.render)
         self.wand.setScale(.1, .1, .1)
-        self.cameramodel.setPos(0, -18, 14)
-        self.camera.setPos(0, -18, 14)
+        self.cameramodel.setPos(0, -18, 8)
+        self.camera.setPos(0, -18, 8)
         # Create a collision traverser
         self.cTrav = CollisionTraverser()
         # Create a collision handler
