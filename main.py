@@ -287,8 +287,9 @@ class MyApp(ShowBase):
             self.spawnnpcs(self.b, 32, -25)
         return Task.cont
     def click(self):
-        if not self.win.getProperties().foreground:
-            self.win.request_properties(WindowProperties(foreground=True))
+        props = self.win.getProperties()
+        if not props.getForeground() or not props.getCursorHidden() or props.getMouseMode() != WindowProperties.MRelative:
+            self.win.requestProperties(WindowProperties(foreground=True, mouse_mode=WindowProperties.MRelative, cursor_hidden=True))
 
         # Create a CollisionRay for the wand
         ray_node = CollisionNode('wand-ray')
