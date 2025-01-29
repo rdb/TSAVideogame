@@ -32,7 +32,7 @@ ALLOW_MEMORY_GROWTH = True
 ASSERTIONS = 0
 OPTIMIZE_LEVEL = 3 # 0-3
 DEBUG_LEVEL = 0 # up to 4
-PY_VERBOSE = True
+PY_VERBOSE = False
 
 # Files to preload into the virtual filesystem
 # You don't need to preload these files anymore, Panda3D will happily read them
@@ -155,6 +155,7 @@ freezer = FreezeTool.Freezer()
 freezer.frozenMainCode = """
 #include "Python.h"
 #include <emscripten.h>
+#include <emscripten/html5.h>
 
 extern PyObject *PyInit_core();
 extern PyObject *PyInit_direct();
@@ -170,7 +171,9 @@ void do_poll() {
     task_manager_poll();
     if (PyErr_Occurred()) {
         PyErr_Print();
+        printf("Exception occurred, see JavaScript console for details\\n");
         emscripten_cancel_main_loop();
+        emscripten_exit_pointerlock();
     }
 }
 
