@@ -2,12 +2,15 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from direct.showbase.DirectObject import DirectObject
 from direct.controls.InputState import InputState
-from panda3d.core import CollisionTraverser, CollisionRay, BitMask32, CollisionHandlerQueue, CollisionHandlerEvent, CollisionNode, CollisionHandlerPusher, CollisionBox, Point3, CollisionSphere, LVector3, CollisionPolygon, WindowProperties
+from panda3d.core import CollisionTraverser, CollisionRay, BitMask32, CollisionHandlerQueue, CollisionHandlerEvent, CollisionNode, CollisionHandlerPusher, CollisionBox, Point3, CollisionSphere, LVector3, CollisionPolygon, WindowProperties, loadPrcFileData
 from panda3d.ai import AIWorld, AICharacter
 import direct.gui.DirectGuiGlobals as DGG
 from direct.gui.DirectGui import *
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.showbase.Transitions import Transitions
+
+loadPrcFileData("", "texture-minfilter linear-mipmap-linear")
+
 class CameraControllerBehaviour(DirectObject):
     _instances = 0
     def __init__(self, camera, velocity=9, mouse_sensitivity=0.2, initial_pos=(-0.5, -12, 7.7), showbase=None):
