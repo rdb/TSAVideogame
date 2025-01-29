@@ -140,6 +140,7 @@ class CameraControllerBehaviour(DirectObject):
         
 class MyApp(ShowBase):
     password = ""
+    haskey = False
 #    def finalboss(self):
 #        self.finalmodel = self.loader.loadModel(r"models/Ghoooooost.glb")
 #        self.finalmodel.reparentTo(self.render)
